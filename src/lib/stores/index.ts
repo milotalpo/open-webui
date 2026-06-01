@@ -279,6 +279,7 @@ type Config = {
 	name: string;
 	version: string;
 	default_locale: string;
+	litellm_base_url?: string;
 	default_models: string;
 	default_prompt_suggestions: PromptSuggestion[];
 	features: {
@@ -325,4 +326,5 @@ export type SessionUser = {
 	name: string;
 	role: string;
 	profile_image_url: string;
+	api_key?: string | null;
 };

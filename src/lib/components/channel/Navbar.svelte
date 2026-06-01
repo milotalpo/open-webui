@@ -9,6 +9,7 @@
 
 	import { WEBUI_API_BASE_URL } from '$lib/constants';
 
+	import LiteLLMBudget from '$lib/components/layout/LiteLLMBudget.svelte';
 	import UserMenu from '$lib/components/layout/Sidebar/UserMenu.svelte';
 	import PencilSquare from '../icons/PencilSquare.svelte';
 	import Tooltip from '../common/Tooltip.svelte';
@@ -195,6 +196,10 @@
 				{/if}
 
 				{#if $user !== undefined}
+					<div>
+						<LiteLLMBudget />
+					</div>
+
 					<div>
 						<UserMenu
 							className="w-[240px]"

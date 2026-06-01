@@ -459,6 +459,7 @@ from open_webui.config import (
     DEFAULT_LOCALE,
     OAUTH_PROVIDERS,
     WEBUI_URL,
+    LITELLM_BASE_URL,
     RESPONSE_WATERMARK,
     IFRAME_CSP,
     # Admin
@@ -876,6 +877,7 @@ app.state.BASE_MODELS = []
 ########################################
 
 app.state.config.WEBUI_URL = WEBUI_URL
+app.state.config.LITELLM_BASE_URL = LITELLM_BASE_URL
 app.state.config.ENABLE_SIGNUP = ENABLE_SIGNUP
 app.state.config.ENABLE_LOGIN_FORM = ENABLE_LOGIN_FORM
 app.state.config.ENABLE_PASSWORD_CHANGE_FORM = ENABLE_PASSWORD_CHANGE_FORM
@@ -2353,6 +2355,7 @@ async def get_app_config(request: Request):
         'name': app.state.WEBUI_NAME,
         'version': VERSION,
         'default_locale': str(DEFAULT_LOCALE),
+        'litellm_base_url': app.state.config.LITELLM_BASE_URL,
         'oauth': {'providers': {name: config.get('name', name) for name, config in OAUTH_PROVIDERS.items()}},
         'features': {
             'auth': WEBUI_AUTH,

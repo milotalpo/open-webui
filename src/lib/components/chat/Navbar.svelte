@@ -24,6 +24,7 @@
 	import ModelSelector from '../chat/ModelSelector.svelte';
 	import Tooltip from '../common/Tooltip.svelte';
 	import Menu from '$lib/components/layout/Navbar/Menu.svelte';
+	import LiteLLMBudget from '$lib/components/layout/LiteLLMBudget.svelte';
 	import UserMenu from '$lib/components/layout/Sidebar/UserMenu.svelte';
 	import AdjustmentsHorizontal from '../icons/AdjustmentsHorizontal.svelte';
 
@@ -235,6 +236,8 @@
 					{/if}
 
 					{#if $user !== undefined && $user !== null}
+						<LiteLLMBudget />
+
 						<UserMenu
 							className="w-[240px]"
 							role={$user?.role}

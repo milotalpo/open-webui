@@ -1238,6 +1238,12 @@ except Exception:
 
 WEBUI_URL = PersistentConfig('WEBUI_URL', 'webui.url', os.environ.get('WEBUI_URL', ''))
 
+LITELLM_BASE_URL = PersistentConfig(
+    'LITELLM_BASE_URL',
+    'litellm.base_url',
+    os.environ.get('LITELLM_BASE_URL', ''),
+)
+
 
 ENABLE_SIGNUP = PersistentConfig(
     'ENABLE_SIGNUP',
