@@ -40,6 +40,8 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+deploy-owui.sh
+push_dockerimage.ps1
 MANIFEST
 
 # PyInstaller

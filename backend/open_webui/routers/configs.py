@@ -675,3 +675,39 @@ async def get_banners(
     user=Depends(get_verified_user),
 ):
     return request.app.state.config.BANNERS
+
+
+############################
+# LiteLLM Config
+############################
+
+
+class LiteLLMConfigForm(BaseModel):
+    LITELLM_BASE_URL: str
+    ENABLE_LITELLM_BUDGET_DISPLAY: bool
+
+
+@router.get('/litellm', response_model=LiteLLMConfigForm)
+async def get_litellm_config(
+    request: Request,
+    user=Depends(get_admin_user),
+):
+    return {
+        'LITELLM_BASE_URL': request.app.state.config.LITELLM_BASE_URL,
+        'ENABLE_LITELLM_BUDGET_DISPLAY': request.app.state.config.ENABLE_LITELLM_BUDGET_DISPLAY,
+    }
+
+
+@router.post('/litellm', response_model=LiteLLMConfigForm)
+async def set_litellm_config(
+    request: Request,
+    form_data: LiteLLMConfigForm,
+    user=Depends(get_admin_user),
+):
+    request.app.state.config.LITELLM_BASE_URL = form_data.LITELLM_BASE_URL
+    request.app.state.config.ENABLE_LITELLM_BUDGET_DISPLAY = form_data.ENABLE_LITELLM_BUDGET_DISPLAY
+
+    return {
+        'LITELLM_BASE_URL': request.app.state.config.LITELLM_BASE_URL,
+        'ENABLE_LITELLM_BUDGET_DISPLAY': request.app.state.config.ENABLE_LITELLM_BUDGET_DISPLAY,
+    }

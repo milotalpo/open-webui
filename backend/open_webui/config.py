@@ -1244,6 +1244,12 @@ LITELLM_BASE_URL = PersistentConfig(
     os.environ.get('LITELLM_BASE_URL', ''),
 )
 
+ENABLE_LITELLM_BUDGET_DISPLAY = PersistentConfig(
+    'ENABLE_LITELLM_BUDGET_DISPLAY',
+    'litellm.enable_budget_display',
+    os.environ.get('ENABLE_LITELLM_BUDGET_DISPLAY', 'True').lower() == 'true',
+)
+
 
 ENABLE_SIGNUP = PersistentConfig(
     'ENABLE_SIGNUP',
