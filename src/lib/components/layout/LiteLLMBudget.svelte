@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { config, user } from '$lib/stores';
+  import { settings } from '$lib/stores';
 
   const POLL_INTERVAL = 60_000;
   const DEFAULT_BORDER = 'rgba(148, 163, 184, 0.22)';
@@ -17,14 +17,18 @@
   let budgetDuration: string | null = null;
   let budgetResetAt: string | null = null;
   let hasError = false;
+  let connectionErrorMessage: string | null = null;
 
   let intervalId: ReturnType<typeof setInterval> | undefined;
 
-  $: apiKey = $user?.api_key ?? null;
-  $: liteLLMBaseUrl = ($config?.litellm_base_url ?? '').trim().replace(/\/$/, '');
+  // Derive credentials from the first active direct connection (OpenAI-compatible endpoint).
+  // The key is kept in the reactive variable and never written to logs or external state.
+  $: directConn = ($settings as any)?.directConnections ?? null;
+  $: apiKey = (directConn?.OPENAI_API_KEYS?.[0] ?? '') as string;
+  $: liteLLMBaseUrl = ((directConn?.OPENAI_API_BASE_URLS?.[0] ?? '') as string).trim().replace(/\/$/, '');
   $: shouldRender = Boolean(apiKey && liteLLMBaseUrl);
   $: borderColor = getBorderColor(spend, maxBudget);
-  $: badgeLabel = hasError ? 'err' : formatCurrency(spend, '–');
+  $: badgeLabel = hasError ? 'n/a' : formatCurrency(spend, '-') + (maxBudget ? ` / ${formatCurrency(maxBudget)}` : '');
   $: resetLabel = formatDateTime(budgetResetAt);
 
   function resetState() {
@@ -33,6 +37,7 @@
     budgetDuration = null;
     budgetResetAt = null;
     hasError = false;
+    connectionErrorMessage = null;
   }
 
   function formatCurrency(value: number | null | undefined, fallback = 'Illimitato') {
@@ -77,11 +82,14 @@
   async function fetchBudget() {
     if (!apiKey || !liteLLMBaseUrl) {
       resetState();
+      console.debug('LiteLLMBudget: no direct connection credentials available; widget idle.');
       return;
     }
 
+    console.debug('LiteLLMBudget: fetching budget info from', `${liteLLMBaseUrl}/key/info`);
+
     try {
-      const response = await fetch(`${liteLLMBaseUrl}/key/info`, {
+      const response = await fetch(`${liteLLMBaseUrl}/key/info?key=${encodeURIComponent(apiKey)}`, {
         headers: {
           Authorization: `Bearer ${apiKey}`
         }
@@ -99,8 +107,14 @@
       budgetDuration = info.budget_duration ?? null;
       budgetResetAt = info.budget_reset_at ?? null;
       hasError = false;
+      connectionErrorMessage = null;
     } catch (error) {
       hasError = true;
+      spend = null;
+      maxBudget = null;
+      budgetDuration = null;
+      budgetResetAt = null;
+      connectionErrorMessage = error instanceof Error ? error.message : 'Connection to LiteLLM was not possible.';
       console.error('Failed to fetch LiteLLM budget info:', error);
     }
   }
@@ -110,7 +124,7 @@
       clearInterval(intervalId);
     }
 
-    if (!apiKey || !liteLLMBaseUrl) {
+    if (!apiKey) {
       intervalId = undefined;
       return;
     }
@@ -120,6 +134,11 @@
   }
 
   onMount(() => {
+    console.debug('LiteLLMBudget mounted', {
+      hasCredentials: Boolean(apiKey && liteLLMBaseUrl),
+      shouldRender
+    });
+
     startPolling();
 
     return () => {
@@ -129,25 +148,48 @@
     };
   });
 
-  $: if (typeof window !== 'undefined') {
-    startPolling();
+  // Re-run polling whenever the direct connection credentials change
+  // (e.g. after settings are loaded or updated).
+  $: {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    apiKey;
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    liteLLMBaseUrl;
+    if (typeof window !== 'undefined') {
+      startPolling();
+    }
   }
 </script>
 
 {#if shouldRender}
   <div class="budget-wrap">
-    <div class="litellm-badge" style={`border-color: ${borderColor};`} role="status" aria-label="Budget LiteLLM">
+    <div
+      class="litellm-badge {hasError ? 'is-error' : ''}"
+      style={`border-color: ${hasError ? DEFAULT_BORDER : borderColor};`}
+      role="status"
+      aria-label="Budget LiteLLM"
+    >
       <span class="amount">{badgeLabel}</span>
     </div>
 
     <div class="tooltip" role="tooltip">
-      <div class="row"><span class="label">Consumi</span><span class="value">{formatCurrency(spend, '–')}</span></div>
-      <div class="row"><span class="label">Budget max</span><span class="value">{formatCurrency(maxBudget)}</span></div>
-      {#if budgetDuration}
-        <div class="row"><span class="label">Periodo</span><span class="value">{budgetDuration}</span></div>
-      {/if}
-      {#if resetLabel}
-        <div class="row"><span class="label">Reset</span><span class="value">{resetLabel}</span></div>
+      {#if hasError}
+        <div class="row single-line">
+          <span class="label">Stato</span>
+          <span class="value">Connessione non disponibile</span>
+        </div>
+        <div class="message">
+          {connectionErrorMessage ?? 'Connection to LiteLLM was not possible.'}
+        </div>
+      {:else}
+        <div class="row"><span class="label">Consumi</span><span class="value">{formatCurrency(spend, '–')}</span></div>
+        <div class="row"><span class="label">Budget max</span><span class="value">{formatCurrency(maxBudget)}</span></div>
+        {#if budgetDuration}
+          <div class="row"><span class="label">Periodo</span><span class="value">{budgetDuration}</span></div>
+        {/if}
+        {#if resetLabel}
+          <div class="row"><span class="label">Reset</span><span class="value">{resetLabel}</span></div>
+        {/if}
       {/if}
     </div>
   </div>
@@ -165,6 +207,7 @@
     align-items: center;
     justify-content: center;
     min-width: 4.5rem;
+    height: 2rem;
     padding: 0.3rem 0.65rem;
     border-radius: 9999px;
     border: 1px solid var(--badge-border, rgba(148, 163, 184, 0.22));
@@ -178,6 +221,17 @@
   :global(.dark) .litellm-badge {
     background: rgba(17, 24, 39, 0.72);
     color: rgb(229, 231, 235);
+  }
+
+  .litellm-badge.is-error {
+    border-color: rgba(148, 163, 184, 0.35) !important;
+    background: rgba(148, 163, 184, 0.14);
+    color: rgb(100, 116, 139);
+  }
+
+  :global(.dark) .litellm-badge.is-error {
+    background: rgba(71, 85, 105, 0.22);
+    color: rgb(148, 163, 184);
   }
 
   .amount {
@@ -236,5 +290,20 @@
   .value {
     text-align: right;
     font-weight: 600;
+  }
+
+  .single-line {
+    align-items: flex-start;
+  }
+
+  .message {
+    margin-top: 0.45rem;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: rgb(71, 85, 105);
+  }
+
+  :global(.dark) .message {
+    color: rgb(148, 163, 184);
   }
 </style>

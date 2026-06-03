@@ -157,6 +157,7 @@ async def create_session_response(
 class SessionUserResponse(Token, UserProfileImageResponse):
     expires_at: Optional[int] = None
     permissions: Optional[dict] = None
+    api_key: Optional[str] = None
 
 
 class SessionUserInfoResponse(SessionUserResponse, UserStatus):
@@ -208,6 +209,7 @@ async def get_session_user(
         )
 
     user_permissions = await get_permissions(user.id, request.app.state.config.USER_PERMISSIONS, db=db)
+    user_api_key = await Users.get_user_api_key_by_id(user.id, db=db)
 
     return {
         'token': token,
@@ -225,6 +227,7 @@ async def get_session_user(
         'status_message': user.status_message,
         'status_expires_at': user.status_expires_at,
         'permissions': user_permissions,
+        'api_key': user_api_key,
     }
 
 

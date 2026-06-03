@@ -196,7 +196,7 @@
 				{/if}
 
 				{#if $user !== undefined}
-					<div>
+					<div class="mr-1">
 						<LiteLLMBudget />
 					</div>
 
