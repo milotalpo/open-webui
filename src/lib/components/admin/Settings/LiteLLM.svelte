@@ -73,25 +73,6 @@
 					)}
 				</div>
 			</div>
-
-			<hr class="border-gray-100/30 dark:border-gray-850/30 my-4" />
-
-			<div class="mb-2.5">
-				<div class="font-medium mb-1">{$i18n.t('LiteLLM Proxy Base URL')}</div>
-				<div class="flex w-full">
-					<input
-						class="w-full rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
-						type="url"
-						placeholder="http://localhost:4000"
-						bind:value={LITELLM_BASE_URL}
-					/>
-				</div>
-				<div class="text-xs text-gray-500 mt-1">
-					{$i18n.t(
-						'Base URL of your LiteLLM proxy server. Used to fetch per-user spend data. Leave empty to disable.'
-					)}
-				</div>
-			</div>
 		</div>
 	</div>
 

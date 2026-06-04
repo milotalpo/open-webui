@@ -61,6 +61,53 @@ Write-Host "✔ Push completato — tag: $TAG" -ForegroundColor Green
 ssh UTENTE@IP_VM "bash ~/deploy-owui.sh"
 ```
 
+**Script da usare**:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+REGISTRY="ghcr.io/milotalpo/open-webui"
+CONTAINER="open-webui"
+GHCR_USER="milotalpo"
+
+echo "▶ [0/5] Stop container, rm e cleanup immagine vecchia con rmi"
+if docker ps -a --format '{{.Names}}' | grep -Eq "^${CONTAINER}$"; then
+  docker stop "$CONTAINER"
+  docker rm "$CONTAINER"
+fi
+if docker images --format '{{.Repository}}:{{.Tag}}' | grep -Eq "^${REGISTRY}:latest$"; then
+  docker rmi "$REGISTRY:latest"
+fi
+
+docker image prune -a -f
+
+echo "▶ [1/4] Login GHCR"
+echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+echo "▶ [2/4] Pull ultima immagine"
+docker pull "$REGISTRY:latest"
+
+echo "▶ [3/4] Stop & remove container esistente"
+docker stop "$CONTAINER" 2>/dev/null || true
+docker rm   "$CONTAINER" 2>/dev/null || true
+
+echo "▶ [4/4] Avvio nuovo container"
+docker run -d \
+  --name "$CONTAINER" \
+  -p 3000:8080 \
+  -v open-webui:/app/backend/data \
+  --network owui-internal \
+  --network searxng_default \
+  --restart unless-stopped \
+  #...
+  "$REGISTRY:latest"
+
+echo ""
+echo "✔ Deploy completato"
+docker ps --filter "name=$CONTAINER" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+```
+
 ---
 
 ## C. Aggiornamento da upstream (nuova versione di Open WebUI)
