@@ -21,7 +21,6 @@
   let connectionErrorMessage: string | null = null;
 
   let intervalId: ReturnType<typeof setInterval> | undefined;
-  let isFetching = false;
 
   // Derive credentials from the first active direct connection (OpenAI-compatible endpoint).
   // The key is kept in the reactive variable and never written to logs or external state.
@@ -82,10 +81,6 @@
   }
 
   async function fetchBudget() {
-    if (isFetching) {
-      return;
-    }
-
     if (!apiKey || !liteLLMBaseUrl) {
       resetState();
       console.debug('LiteLLMBudget: no direct connection credentials available; widget idle.');
@@ -95,7 +90,6 @@
     console.debug('LiteLLMBudget: fetching budget info from', `${liteLLMBaseUrl}/key/info`);
 
     try {
-      isFetching = true;
       const response = await fetch(`${liteLLMBaseUrl}/key/info?key=${encodeURIComponent(apiKey)}`, {
         headers: {
           Authorization: `Bearer ${apiKey}`
@@ -123,9 +117,11 @@
       budgetResetAt = null;
       connectionErrorMessage = error instanceof Error ? error.message : 'Connection to LiteLLM was not possible.';
       console.error('Failed to fetch LiteLLM budget info:', error);
-    } finally {
-      isFetching = false;
     }
+  }
+
+  function handleBudgetRefresh() {
+    fetchBudget();
   }
 
   function startPolling() {
@@ -148,18 +144,14 @@
       shouldRender
     });
 
-    const handleBudgetRefresh = () => {
-      fetchBudget();
-    };
-
-    window.addEventListener(LITELLM_BUDGET_REFRESH_EVENT, handleBudgetRefresh);
     startPolling();
+    window.addEventListener(LITELLM_BUDGET_REFRESH_EVENT, handleBudgetRefresh);
 
     return () => {
-      window.removeEventListener(LITELLM_BUDGET_REFRESH_EVENT, handleBudgetRefresh);
       if (intervalId) {
         clearInterval(intervalId);
       }
+      window.removeEventListener(LITELLM_BUDGET_REFRESH_EVENT, handleBudgetRefresh);
     };
   });
 

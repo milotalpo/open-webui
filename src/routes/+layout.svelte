@@ -499,7 +499,6 @@
 			} else if (type === 'request:chat:completion') {
 				console.log(data, $socket.id);
 				const { session_id, channel, form_data, model } = data;
-				dispatchLiteLLMBudgetRefresh();
 
 				try {
 					const directConnections = $settings?.directConnections ?? {};
@@ -578,10 +577,10 @@
 					console.error('chatCompletion', error);
 					cb(error);
 				} finally {
-					dispatchLiteLLMBudgetRefresh();
 					$socket.emit(channel, {
 						done: true
 					});
+					dispatchLiteLLMBudgetRefresh();
 				}
 				return;
 			}

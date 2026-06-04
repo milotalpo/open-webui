@@ -1837,7 +1837,6 @@
 
 		if (done) {
 			message.done = true;
-			dispatchLiteLLMBudgetRefresh();
 
 			if ($settings.responseAutoCopy) {
 				copyToClipboard(message.content);
@@ -1878,6 +1877,7 @@
 			if (autoScroll) {
 				scrollToBottom();
 			}
+			dispatchLiteLLMBudgetRefresh();
 
 			// Fire-and-forget: run chatCompletedHandler for background work
 			// (outlet filters, chat save, title gen, follow-ups, tags)
@@ -1942,7 +1942,6 @@
 		}
 
 		history.currentId = userMessageId;
-		dispatchLiteLLMBudgetRefresh();
 
 		// focus on chat input (skip during voice call to avoid triggering mobile keyboard)
 		if (!$showCallOverlay) {
