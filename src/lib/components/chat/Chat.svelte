@@ -66,6 +66,7 @@
 		displayFileHandler
 	} from '$lib/utils';
 	import { AudioQueue } from '$lib/utils/audio';
+	import { dispatchLiteLLMBudgetRefresh } from '$lib/utils/litellm-budget';
 
 	import {
 		archiveChatById,
@@ -1836,6 +1837,7 @@
 
 		if (done) {
 			message.done = true;
+			dispatchLiteLLMBudgetRefresh();
 
 			if ($settings.responseAutoCopy) {
 				copyToClipboard(message.content);
@@ -1940,6 +1942,7 @@
 		}
 
 		history.currentId = userMessageId;
+		dispatchLiteLLMBudgetRefresh();
 
 		// focus on chat input (skip during voice call to avoid triggering mobile keyboard)
 		if (!$showCallOverlay) {

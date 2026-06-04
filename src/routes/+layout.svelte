@@ -65,6 +65,7 @@
 	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL, WEBUI_HOSTNAME } from '$lib/constants';
 	import { bestMatchingLanguage, displayFileHandler, getUserTimezone } from '$lib/utils';
 	import { setTextScale } from '$lib/utils/text-scale';
+	import { dispatchLiteLLMBudgetRefresh } from '$lib/utils/litellm-budget';
 
 	import NotificationToast from '$lib/components/NotificationToast.svelte';
 	import AppSidebar from '$lib/components/app/AppSidebar.svelte';
@@ -498,6 +499,7 @@
 			} else if (type === 'request:chat:completion') {
 				console.log(data, $socket.id);
 				const { session_id, channel, form_data, model } = data;
+				dispatchLiteLLMBudgetRefresh();
 
 				try {
 					const directConnections = $settings?.directConnections ?? {};
@@ -576,6 +578,7 @@
 					console.error('chatCompletion', error);
 					cb(error);
 				} finally {
+					dispatchLiteLLMBudgetRefresh();
 					$socket.emit(channel, {
 						done: true
 					});
